@@ -89,7 +89,7 @@ step_files() {
   local src_dir
   src_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   local f found=0
-  for f in adbmcp car_setup.sh scan_car.py car_watchdog.sh boot_car_mcp.sh; do
+  for f in adbmcp car_setup.sh scan_car.py car_watchdog.sh boot_car_mcp.sh patch_cancelled.py; do
     if [ -f "$src_dir/$f" ]; then
       cp "$src_dir/$f" "$CAR_DIR/$f" 2>/dev/null
       [ "$f" = "adbmcp" ] && cp "$src_dir/$f" "$BIN_DIR/adbmcp"
@@ -104,6 +104,11 @@ step_files() {
     exit 1
   fi
   green "  ✓ 已部署 $found 个文件"
+
+  # 立即应用上游补丁 (幂等, 之后每次启动 adbmcp 会自动检查)
+  if [ -f "$BIN_DIR/patch_cancelled.py" ]; then
+    python3 "$BIN_DIR/patch_cancelled.py" 2>&1 | sed 's/^/  /'
+  fi
 
   # PATH
   if ! grep -q 'HOME/bin' "$H/.bashrc" 2>/dev/null; then

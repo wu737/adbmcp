@@ -136,6 +136,25 @@ connect_cars() {
   dim "  已连接车机: $connected 台"
 }
 
+# ── 上游补丁 ───────────────────────────────────────────────
+# termux-mcp v0.15.0 的 dispatch() 未实现 MCP 规范要求的 notifications/*
+# 通知方法 (notifications/cancelled 等)。客户端 (RikkaHub / Claude) 在用户
+# 中断生成时会发 notifications/cancelled，服务端返回 -32601 Method not
+# found，客户端把它显示成 "Error while sending message"。
+#
+# 补丁脚本幂等，且在每次启动时检查 —— pip 升级 termux-mcp 后会自动重打。
+apply_patches() {
+  local patcher="$HOME/bin/patch_cancelled.py"
+  if [ ! -f "$patcher" ]; then
+    patcher="$BASE_DIR/patch_cancelled.py"
+  fi
+  if [ -f "$patcher" ]; then
+    local out
+    out=$(python3 "$patcher" 2>&1)
+    echo "$out" | grep -q "已为 notifications" && green "  ✓ 已应用上游补丁 (notifications/*)"
+  fi
+}
+
 # ── 启动 MCP ───────────────────────────────────────────────
 start_mcp() {
   if mcp_alive; then
@@ -146,6 +165,7 @@ start_mcp() {
   pkill -f "termux-native-mcp" 2>/dev/null
   sleep 1
   purge_token_file
+  apply_patches
 
   local token
   token=$(ensure_token)

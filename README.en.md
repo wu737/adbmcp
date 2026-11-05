@@ -111,6 +111,12 @@ Use system_info to check the phone's CPU and memory.
 | `adbmcp lan` / `adbmcp local` | LAN mode (with token) / localhost-only (no auth) |
 | `adbmcp restart` / `stop` | Restart / stop |
 
+> **Automatic patch** — `termux-mcp` v0.15.0 does not implement the `notifications/*`
+> methods required by the MCP spec, which makes clients (RikkaHub in particular)
+> report "Error while sending message". `adbmcp` checks and applies the patch on
+> every start (see [`scripts/patch_cancelled.py`](scripts/patch_cancelled.py)),
+> including after a `pip upgrade`.
+
 ---
 
 ## Dependencies
@@ -131,6 +137,7 @@ Use system_info to check the phone's CPU and memory.
 install/install-adbmcp.sh   one-shot installer
 scripts/
   adbmcp                    main script (on PATH, just type `adbmcp`)
+  patch_cancelled.py        upstream patch (adds notifications/* handling)
   car_watchdog.sh           watchdog: MCP process + car connections
   boot_car_mcp.sh           boot autostart entry
   car_setup.sh              manual car connection helper
@@ -160,6 +167,27 @@ After deployment on the phone:
 | [RikkaHub 对话使用](docs/RikkaHub-对话使用.md) | Verified prompt examples, path permission boundaries |
 | [RikkaHub 工具调用排查](docs/RikkaHub-工具调用排查.md) | Root cause of "model does not support tool calling" (source-level) |
 | [诊断记录](docs/诊断记录-工具不可用.md) | Full troubleshooting log |
+| [对比 yhuangsh/adbmcp](docs/对比-yhuangsh-adbmcp.md) | Differences from the same-named project |
+| [Troubleshooting: notifications/cancelled](docs/排障-notifications-cancelled.md) | Root cause of RikkaHub's "Error while sending message" |
+
+---
+
+## About the same-named project
+
+There is another project also called `adbmcp`: [yhuangsh/adbmcp](https://github.com/yhuangsh/adbmcp)
+(npm package `@yhuangsh/adbmcp`). **These are different projects** — the shared name is a
+coincidence, and they coexist fine:
+
+| | yhuangsh/adbmcp | this project |
+|---|---|---|
+| Host | PC / any machine with Node ≥20 | **phone running Termux** |
+| Target device | **Android phones** | **Buildroot Linux car head units** |
+| Implementation | 1300+ lines of hand-written TypeScript, 37 tools | Bash on top of `termux-mcp`, 84 tools |
+| Highlights | deep Android integration (uiautomator/logcat/pm/input), npm distribution, full test suite and CI | car-unit operations, phone-as-gateway, zero Node dependency, fixed token |
+
+Measured evidence: the Android-specific tools on the other project all fail with `not found`
+on a car head unit (Buildroot has no Android framework).
+See the [comparison doc](docs/对比-yhuangsh-adbmcp.md).
 
 ---
 

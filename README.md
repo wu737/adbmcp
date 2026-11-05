@@ -111,6 +111,11 @@ RikkaHub 专用格式见 [`examples/rikkahub-mcp-import.json`](examples/rikkahub
 | `adbmcp lan` / `adbmcp local` | 切换局域网模式（+token）/ 仅本机模式（免鉴权） |
 | `adbmcp restart` / `stop` | 重启 / 停止 |
 
+> **自动打补丁** —— `termux-mcp` v0.15.0 未实现 MCP 规范要求的 `notifications/*`
+> 通知方法，客户端（尤其 RikkaHub）会因此报「Error while sending message」。
+> `adbmcp` 每次启动都会自动检查并打上补丁（见
+> [`scripts/patch_cancelled.py`](scripts/patch_cancelled.py)），pip 升级后同样自动重打。
+
 ---
 
 ## 依赖
@@ -131,6 +136,7 @@ RikkaHub 专用格式见 [`examples/rikkahub-mcp-import.json`](examples/rikkahub
 install/install-adbmcp.sh   一键安装
 scripts/
   adbmcp                    主脚本（PATH 内，直接敲 adbmcp）
+  patch_cancelled.py        上游补丁（补齐 notifications/* 方法）
   car_watchdog.sh           守护：MCP 进程 + 车机连接
   boot_car_mcp.sh           开机自启入口
   car_setup.sh              手动连车机
@@ -161,6 +167,7 @@ examples/                   各客户端配置示例
 | [迁移指南](docs/迁移指南.md) | 换新手机部署 |
 | [诊断记录](docs/诊断记录-工具不可用.md) | 完整排查过程留档 |
 | [对比 yhuangsh/adbmcp](docs/对比-yhuangsh-adbmcp.md) | 同名项目的区别（宿主位置 / 目标设备不同）|
+| [排障 notifications/cancelled](docs/排障-notifications-cancelled.md) | RikkaHub 报「Error while sending message」的根因 |
 
 ---
 
