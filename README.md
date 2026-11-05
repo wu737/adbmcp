@@ -160,6 +160,24 @@ examples/                   各客户端配置示例
 | [RikkaHub 工具调用排查](docs/RikkaHub-工具调用排查.md) | 「当前模型未开启工具调用」根因（源码级）|
 | [迁移指南](docs/迁移指南.md) | 换新手机部署 |
 | [诊断记录](docs/诊断记录-工具不可用.md) | 完整排查过程留档 |
+| [对比 yhuangsh/adbmcp](docs/对比-yhuangsh-adbmcp.md) | 同名项目的区别（宿主位置 / 目标设备不同）|
+
+---
+
+## 关于同名项目
+
+有一个也叫 `adbmcp` 的项目：[yhuangsh/adbmcp](https://github.com/yhuangsh/adbmcp)（npm 包 `@yhuangsh/adbmcp`）。
+**两者不是同一个东西，名字相同纯属巧合**，可以并存：
+
+| | yhuangsh/adbmcp | 本项目 |
+|---|---|---|
+| 宿主 | PC / 任意装 Node≥20 的机器 | **手机 Termux** |
+| 目标设备 | **Android 手机** | **Buildroot Linux 车机** |
+| 实现 | TypeScript 1300+ 行自研，37 工具 | Bash 复用 `termux-mcp`，84 工具 |
+| 特色 | Android 深度集成（uiautomator/logcat/pm/input）、npm 分发、完整测试与 CI | 车机运维、手机即网关、零 Node 依赖、Token 固定 |
+
+实测证据：对方的 Android 专属工具在车机上全部 `not found`（车机是 Buildroot，无 Android framework）。
+详见 [对比文档](docs/对比-yhuangsh-adbmcp.md)。
 
 ---
 
