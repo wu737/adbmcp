@@ -1,0 +1,12 @@
+{
+  "_comment": "把 YOUR_TOKEN 换成 adbmcp token 命令输出的值；YOUR_PHONE_IP 换成手机在局域网里的 IP（adbmcp config 可直接打印现成配置）",
+  "type": "streamableHttp",
+  "commonOptions": {
+    "name": "termux",
+    "enable": true,
+    "headers": [
+      ["Authorization", "Bearer YOUR_TOKEN"]
+    ]
+  },
+  "url": "http://YOUR_PHONE_IP:8081/mcp"
+}
