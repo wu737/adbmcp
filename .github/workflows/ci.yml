@@ -21,7 +21,29 @@ jobs:
           python-version: "3.11"
 
       - name: 安装构建工具
-        run: python -m pip install --upgrade build twine shellcheck
+        run: |
+          python -m pip install --upgrade pip
+          # GitHub runner 拉 PyPI 偶发超时/限流, 重试几次
+          python -m pip install --upgrade build twine shellcheck || \
+          python -m pip install --upgrade --retries 5 --timeout 60 build twine shellcheck
+
+      - name: 校验 workflow YAML
+        run: |
+          python - <<'EOF'
+          import glob, sys, yaml
+          bad = []
+          for f in glob.glob(".github/workflows/*.yml"):
+              try:
+                  yaml.safe_load(open(f, encoding="utf-8"))
+              except Exception as e:
+                  bad.append(f"{f}: {e}")
+          if bad:
+              print("YAML 解析失败:")
+              for b in bad:
+                  print("  -", b)
+              sys.exit(1)
+          print("workflow YAML 校验通过")
+          EOF
 
       - name: 构建
         run: python -m build
