@@ -4,7 +4,10 @@
 scripts/adbmcp text eol=lf
 scripts/scan_device.py text eol=lf
 
-# 文档统一 LF
+# 文档与配置统一 LF
 *.md text eol=lf
 *.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
 LICENSE text eol=lf
