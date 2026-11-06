@@ -45,7 +45,26 @@ The first attempt ran `mobile-mcp` on the PC (accessibility-tree based Android a
 
 Use **F-Droid** or GitHub (do **not** use the outdated Play Store build). Let it finish initializing on first launch.
 
-### 2. Deploy
+### 2. Install
+
+**Option A - PyPI (recommended, no file transfer)**
+
+```bash
+pip install termux-adbmcp
+adbmcp
+```
+
+The first run deploys everything automatically: copies scripts to `~/bin`, installs
+dependencies (`android-tools` + `termux-mcp`), applies the upstream patch. After that,
+just type `adbmcp`.
+
+**Option B - one-liner**
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@main/install/bootstrap.sh | bash
+```
+
+**Option C - manual deploy**
 
 Copy `install/install-adbmcp.sh` and everything under `scripts/` into `~/adbmcp/` on the phone, then:
 

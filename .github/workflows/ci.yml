@@ -109,7 +109,7 @@ jobs:
           # 只检查有 shebang 的 shell 脚本
           fail=0
           for f in scripts/adbmcp scripts/device_setup.sh scripts/device_watchdog.sh \
-                   scripts/boot_mcp.sh install/install-adbmcp.sh; do
+                   scripts/boot_mcp.sh install/install-adbmcp.sh install/bootstrap.sh; do
             if head -1 "$f" | grep -q 'bash'; then
               shellcheck -S warning "$f" || fail=1
             fi
