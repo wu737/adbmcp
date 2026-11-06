@@ -89,7 +89,6 @@ reconnect_devices() {
     return 0
   fi
 
-  local connected_any=0
   local target state
 
   while read -r target _rest; do
@@ -105,7 +104,6 @@ reconnect_devices() {
     state=$(adb devices 2>/dev/null | awk -v t="$target" '$1==t{print $2; exit}')
     if [[ "$state" == "device" ]]; then
       log "✓ 设备 $target 已连接"
-      connected_any=1
     else
       log "✗ 设备 $target 连接失败 (状态: ${state:-none})"
     fi
