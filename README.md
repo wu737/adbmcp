@@ -51,7 +51,7 @@
 **方式 A · PyPI（推荐，无需传文件）**
 
 ```bash
-pip install adbmcp
+pip install termux-adbmcp
 adbmcp
 ```
 
