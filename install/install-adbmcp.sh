@@ -25,7 +25,6 @@ export PATH="$BIN_DIR:$B:$PATH:/system/bin"
 MCP_PORT="${MCP_PORT:-8081}"
 MCP_HOST="${MCP_HOST:-0.0.0.0}"
 # 固定 token: 换手机时可保持不变, AI 客户端配置就不用改
-FIXED_TOKEN="${ADBMCP_TOKEN:-adbmcp-K60Pro-2026-fixed-8f3a9c2e}"
 PKG_VERSION="termux-mcp==0.15.0"
 
 cyan()  { echo -e "\033[0;36m$*\033[0m"; }
