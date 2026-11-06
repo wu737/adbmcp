@@ -46,7 +46,25 @@
 
 从 **F-Droid** 或 GitHub 安装（**不要用 Play 商店的旧版**）。首次打开等它初始化完。
 
-### 2. 部署
+### 2. 安装
+
+**方式 A · PyPI（推荐，无需传文件）**
+
+```bash
+pip install adbmcp
+adbmcp
+```
+
+首次运行 `adbmcp` 会自动完成部署：复制脚本到 `~/bin`、安装依赖（`android-tools` +
+`termux-mcp`）、打上游补丁。之后直接敲 `adbmcp` 即可。
+
+**方式 B · 一行脚本**
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@main/install/bootstrap.sh | bash
+```
+
+**方式 C · 手动部署**
 
 把 `install/install-adbmcp.sh` 与 `scripts/` 下的文件传到手机 Termux（`~/adbmcp/`），然后：
 

@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: 构建校验
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装构建工具
+        run: python -m pip install --upgrade build twine shellcheck
+
+      - name: 构建
+        run: python -m build
+
+      - name: twine check
+        run: python -m twine check dist/*
+
+      - name: 校验 wheel 内容
+        run: |
+          python - <<'EOF'
+          import glob, zipfile, sys
+          whl = sorted(glob.glob("dist/*.whl"))[-1]
+          z = zipfile.ZipFile(whl)
+          names = z.namelist()
+          errors = []
+
+          # 脚本必须是 LF —— Termux 下 CRLF 会报 bad interpreter
+          crlf = [n for n in names
+                  if n.endswith((".sh", ".py")) and b"\r\n" in z.read(n)]
+          if crlf:
+              errors.append(f"CRLF 文件: {crlf}")
+
+          # 关键文件必须在
+          required = [
+              "adbmcp/scripts/adbmcp",
+              "adbmcp/scripts/device_watchdog.sh",
+              "adbmcp/scripts/device_setup.sh",
+              "adbmcp/scripts/boot_mcp.sh",
+              "adbmcp/scripts/scan_device.py",
+              "adbmcp/scripts/patch_cancelled.py",
+          ]
+          for r in required:
+              if r not in names:
+                  errors.append(f"缺少 {r}")
+
+          # 字节码缓存不能进包
+          pyc = [n for n in names if "__pycache__" in n or n.endswith(".pyc")]
+          if pyc:
+              errors.append(f"__pycache__ 残留: {pyc}")
+
+          # 主脚本关键实现
+          adm = z.read("adbmcp/scripts/adbmcp").decode()
+          for token in ("connect_devices", "fix_crlf", "等待设备接入中"):
+              if token not in adm:
+                  errors.append(f"主脚本缺少 {token}")
+          if "connect_cars" in adm:
+              errors.append("主脚本仍残留 connect_cars")
+
+          if errors:
+              print("❌ 校验失败:")
+              for e in errors:
+                  print("   -", e)
+              sys.exit(1)
+          print(f"✅ 校验通过 ({len(names)} 个文件)")
+          EOF
+
+      - name: shellcheck 脚本
+        run: |
+          # 只检查有 shebang 的 shell 脚本
+          fail=0
+          for f in scripts/adbmcp scripts/device_setup.sh scripts/device_watchdog.sh \
+                   scripts/boot_mcp.sh install/install-adbmcp.sh; do
+            if head -1 "$f" | grep -q 'bash'; then
+              shellcheck -S warning "$f" || fail=1
+            fi
+          done
+          exit $fail
+
+      - name: 无残留「车机」措辞
+        run: |
+          # install-adbmcp.sh 里保留了旧目录的迁移标识 (mcp-servers/car), 有意为之
+          if grep -rn '车机' --include='*.md' --include='*.json' . \
+               | grep -v '.workbuddy' ; then
+            echo "❌ 文档中仍有「车机」措辞"
+            exit 1
+          fi
+          if grep -rn '车机' scripts/ ; then
+            echo "❌ 脚本中仍有「车机」措辞"
+            exit 1
+          fi
+          echo "✅ 文档与脚本措辞检查通过"
