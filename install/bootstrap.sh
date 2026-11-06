@@ -3,7 +3,7 @@
 #  adbmcp 一行安装 (bootstrap)
 #
 #  用法:
-#    curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@v0.2.2/install/bootstrap.sh | bash
+#    curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@v0.2.3/install/bootstrap.sh | bash
 #
 #  作用:
 #    从仓库直接拉取脚本文本 → 校验 → 执行 install-adbmcp.sh 完成部署
@@ -25,7 +25,7 @@ yellow(){ echo -e "\033[1;33m$*\033[0m"; }
 # 固定 tag (不可变引用): jsDelivr 对 @main 的缓存按文件独立生效, 实测
 # bootstrap.sh 会长期卡在旧版本, 而 tag/commit sha 立即生效且可复现。
 # 发新版时同步改这里与 README 里的 @tag。
-DEFAULT_REF="v0.2.2"
+DEFAULT_REF="v0.2.3"
 REF="${ADBMCP_VERSION:-$DEFAULT_REF}"
 
 echo
@@ -33,19 +33,27 @@ cyan "▸ adbmcp bootstrap  (ref: $REF)"
 echo
 
 # ── 1. 环境检查 (必须先于任何使用 $H 的路径) ──────────────────
-# 从 MCP / adb shell / 开机自启触发时, $HOME 可能不是 Termux 的 home,
-# 此时显式纠正并传给子进程 (install-adbmcp.sh 也依赖 $HOME)。
-H="$HOME"
-if [ ! -d "$H/files/usr/bin" ] && [ -d /data/data/com.termux/files/usr/bin ]; then
-  H=/data/data/com.termux/files/home
-  export HOME="$H"
+# Termux 的 $HOME 是 .../files/home, 二进制在 $PREFIX/bin (.../files/usr/bin)。
+# 早期版本误用 $HOME/files/usr/bin —— 该目录根本不存在, 会拒绝所有真实用户。
+H="${HOME:-}"
+TERMUX_USR=""
+case "${PREFIX:-}" in
+  *com.termux*) [ -d "$PREFIX/bin" ] && TERMUX_USR="$PREFIX" ;;
+esac
+if [ -z "$TERMUX_USR" ] && [ -d /data/data/com.termux/files/usr/bin ]; then
+  TERMUX_USR=/data/data/com.termux/files/usr
 fi
-if [ ! -d "$H/files/usr/bin" ]; then
+if [ -z "$TERMUX_USR" ]; then
   red "✗ 这不是 Termux 环境"
   echo "  adbmcp 需要在 Android Termux 中运行"
   exit 1
 fi
-export PATH="$H/bin:$H/files/usr/bin:$PATH:/system/bin"
+# MCP / adb shell 触发时 $HOME 可能被改写; 只在它为空或不可用时纠正
+if [ -z "$H" ] || [ ! -d "$H" ]; then
+  H=/data/data/com.termux/files/home
+  export HOME="$H"
+fi
+export PATH="$H/bin:$TERMUX_USR/bin:$PATH:/system/bin"
 
 for cmd in curl sed; do
   command -v "$cmd" >/dev/null 2>&1 || {

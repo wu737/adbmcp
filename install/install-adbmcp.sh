@@ -17,7 +17,8 @@ H="$HOME"
 BIN_DIR="$H/bin"
 APP_DIR="$H/mcp-servers/adbmcp"
 OLD_DIR="$H/mcp-servers/car"          # 旧版目录 (车机时代), 用于迁移
-B="$H/files/usr/bin"
+# Termux 二进制在 $PREFIX/bin, 不是 $HOME/files/usr/bin
+B="${PREFIX:-/data/data/com.termux/files/usr}/bin"
 # 注意: 必须追加而非覆盖 —— 覆盖会丢掉 Termux 原有的 usr/bin,
 # 导致 python3 / pip / adb 全部 command not found
 export PATH="$BIN_DIR:$B:$PATH:/system/bin"
