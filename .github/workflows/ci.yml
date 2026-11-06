@@ -22,10 +22,14 @@ jobs:
 
       - name: 安装构建工具
         run: |
+          set -e
           python -m pip install --upgrade pip
-          # GitHub runner 拉 PyPI 偶发超时/限流, 重试几次
-          python -m pip install --upgrade build twine shellcheck || \
-          python -m pip install --upgrade --retries 5 --timeout 60 build twine shellcheck
+          # GitHub runner 拉 PyPI 偶发超时/限流, 失败重试
+          python -m pip install --upgrade build twine pyyaml \
+            || python -m pip install --upgrade --retries 5 --timeout 60 build twine pyyaml
+          # shellcheck 用 wheel 分发 (不是 apt 包, 不能和上面的混装)
+          python -m pip install --upgrade shellcheck-py \
+            || python -m pip install --upgrade --retries 5 --timeout 60 shellcheck-py
 
       - name: 校验 workflow YAML
         run: |
