@@ -61,7 +61,7 @@ adbmcp
 **方式 B · 一行脚本**
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@main/install/bootstrap.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@v0.2.2/install/bootstrap.sh | bash
 ```
 
 **方式 C · 手动部署**

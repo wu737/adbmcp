@@ -3,14 +3,14 @@
 #  adbmcp 一行安装 (bootstrap)
 #
 #  用法:
-#    curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@main/install/bootstrap.sh | bash
+#    curl -fsSL https://cdn.jsdelivr.net/gh/wu737/adbmcp@v0.2.2/install/bootstrap.sh | bash
 #
 #  作用:
 #    从仓库直接拉取脚本文本 → 校验 → 执行 install-adbmcp.sh 完成部署
 #    与 `pip install termux-adbmcp` 等价, 只是走纯 shell 路径, 不依赖 Python 包管理
 #
 #  为什么逐个拉文本文件而不是拉一个 zip:
-#    zip 是二进制产物, 不会随代码自动更新; 而仓库里的 .sh 文本永远与 main 同步。
+#    zip 是二进制产物, 不会随代码自动更新; 而仓库里的 .sh 文本可直接按 tag 取。
 #    实测用户网络下 github.com / raw.githubusercontent.com 常被阻断,
 #    jsDelivr 可达 —— 所以做多镜像自动选源。
 # ═══════════════════════════════════════════════════════════════
@@ -22,7 +22,11 @@ green() { echo -e "\033[0;32m$*\033[0m"; }
 red()   { echo -e "\033[0;31m$*\033[0m"; }
 yellow(){ echo -e "\033[1;33m$*\033[0m"; }
 
-REF="${ADBMCP_VERSION:-main}"
+# 固定 tag (不可变引用): jsDelivr 对 @main 的缓存按文件独立生效, 实测
+# bootstrap.sh 会长期卡在旧版本, 而 tag/commit sha 立即生效且可复现。
+# 发新版时同步改这里与 README 里的 @tag。
+DEFAULT_REF="v0.2.2"
+REF="${ADBMCP_VERSION:-$DEFAULT_REF}"
 
 echo
 cyan "▸ adbmcp bootstrap  (ref: $REF)"
