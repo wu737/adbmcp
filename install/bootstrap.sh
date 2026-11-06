@@ -17,8 +17,42 @@
 
 set -uo pipefail
 
-H="$HOME"
+cyan()  { echo -e "\033[0;36m$*\033[0m"; }
+green() { echo -e "\033[0;32m$*\033[0m"; }
+red()   { echo -e "\033[0;31m$*\033[0m"; }
+yellow(){ echo -e "\033[1;33m$*\033[0m"; }
+
 REF="${ADBMCP_VERSION:-main}"
+
+echo
+cyan "▸ adbmcp bootstrap  (ref: $REF)"
+echo
+
+# ── 1. 环境检查 (必须先于任何使用 $H 的路径) ──────────────────
+# 从 MCP / adb shell / 开机自启触发时, $HOME 可能不是 Termux 的 home,
+# 此时显式纠正并传给子进程 (install-adbmcp.sh 也依赖 $HOME)。
+H="$HOME"
+if [ ! -d "$H/files/usr/bin" ] && [ -d /data/data/com.termux/files/usr/bin ]; then
+  H=/data/data/com.termux/files/home
+  export HOME="$H"
+fi
+if [ ! -d "$H/files/usr/bin" ]; then
+  red "✗ 这不是 Termux 环境"
+  echo "  adbmcp 需要在 Android Termux 中运行"
+  exit 1
+fi
+export PATH="$H/bin:$H/files/usr/bin:$PATH:/system/bin"
+
+for cmd in curl sed; do
+  command -v "$cmd" >/dev/null 2>&1 || {
+    red "✗ 缺少 $cmd"
+    echo "  安装: pkg install ${cmd}"
+    exit 1
+  }
+done
+green "  ✓ 环境检查通过"
+
+# ── 2. 下载配置 ────────────────────────────────────────────
 TMP="$H/.adbmcp_bootstrap"
 
 # 候选镜像 (按优先级); 会自动记住第一个可用的, 后续文件直接复用
@@ -41,33 +75,21 @@ FILES=(
   "install/install-adbmcp.sh"
 )
 
-cyan()  { echo -e "\033[0;36m$*\033[0m"; }
-green() { echo -e "\033[0;32m$*\033[0m"; }
-red()   { echo -e "\033[0;31m$*\033[0m"; }
-yellow(){ echo -e "\033[1;33m$*\033[0m"; }
+# 校验语法, 并统一 LF (Windows 上编辑过的脚本会带 CRLF, Termux 会报 bad interpreter)
+verify() {
+  local rel="$1" f="$2"
+  sed -i 's/\r$//' "$f" 2>/dev/null
+  case "$rel" in
+    *.py)
+      python3 -c 'import ast,sys; ast.parse(open(sys.argv[1],encoding="utf-8").read())' "$f" 2>/dev/null || return 1
+      ;;
+    *)
+      bash -n "$f" 2>/dev/null || return 1
+      ;;
+  esac
+  return 0
+}
 
-echo
-cyan "▸ adbmcp bootstrap  (ref: $REF)"
-echo
-
-# ── 1. 环境检查 ────────────────────────────────────────────
-if [ ! -d "$H/files/usr/bin" ]; then
-  red "✗ 这不是 Termux 环境"
-  echo "  adbmcp 需要在 Android Termux 中运行"
-  exit 1
-fi
-export PATH="$H/bin:$H/files/usr/bin:$PATH:/system/bin"
-
-for cmd in curl sed; do
-  command -v "$cmd" >/dev/null 2>&1 || {
-    red "✗ 缺少 $cmd"
-    echo "  安装: pkg install ${cmd}"
-    exit 1
-  }
-done
-green "  ✓ 环境检查通过"
-
-# ── 2. 下载 ────────────────────────────────────────────────
 # 返回 0 = 成功且 dest 内容有效
 fetch() {
   local rel="$1" dest="$2" m url
@@ -97,21 +119,6 @@ fetch() {
   return 1
 }
 
-# 校验语法, 并统一 LF (Windows 上编辑过的脚本会带 CRLF, Termux 会报 bad interpreter)
-verify() {
-  local rel="$1" f="$2"
-  sed -i 's/\r$//' "$f" 2>/dev/null
-  case "$rel" in
-    *.py)
-      python3 -c 'import ast,sys; ast.parse(open(sys.argv[1],encoding="utf-8").read())' "$f" 2>/dev/null || return 1
-      ;;
-    *)
-      bash -n "$f" 2>/dev/null || return 1
-      ;;
-  esac
-  return 0
-}
-
 rm -rf "$TMP"
 mkdir -p "$TMP/scripts" "$TMP/install" || exit 1
 
@@ -128,7 +135,7 @@ for rel in "${FILES[@]}"; do
   fi
 done
 printf "%s\n" "$(green "✓ ${#FILES[@]} 个文件")"
-yellow "    镜像: ${BASE%%/install*}"
+yellow "    镜像: $BASE"
 
 # ── 3. 执行安装 ─────────────────────────────────────────────
 # install-adbmcp.sh 会从同目录的 ../scripts/ 取脚本, 上面的布局正好匹配
