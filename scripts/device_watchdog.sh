@@ -1,30 +1,30 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ═══════════════════════════════════════════════════════════════
-#  车机 MCP 守护 (Termux Native MCP + ADB 车机连接)
+#  adbmcp 守护 (Termux Native MCP + ADB 设备连接维护)
 #
 #  职责:
 #    1. 保持 termux-native-mcp (HTTP :8081) 存活
-#    2. 保持与车机的 adb 连接存活 (掉线自动重连)
+#    2. 保持与设备清单的 adb 连接存活 (掉线自动重连)
 #    3. 周期性记录健康状态
 #
 #  用法:
-#    bash ~/car_watchdog.sh start    启动守护 (后台)
-#    bash ~/car_watchdog.sh stop     停止
-#    bash ~/car_watchdog.sh status   查看状态
-#    bash ~/car_watchdog.sh run      前台运行 (调试)
+#    bash ~/device_watchdog.sh start    启动守护 (后台)
+#    bash ~/device_watchdog.sh stop     停止
+#    bash ~/device_watchdog.sh status   查看状态
+#    bash ~/device_watchdog.sh run      前台运行 (调试)
 # ═══════════════════════════════════════════════════════════════
 
 set -uo pipefail
 
-BASE_DIR="$HOME/mcp-servers/car"
+BASE_DIR="$HOME/mcp-servers/adbmcp"
 PID_FILE="$BASE_DIR/watchdog.pid"
 LOG_FILE="$BASE_DIR/watchdog.log"
 MCP_PORT="${MCP_PORT:-8081}"
 MCP_HOST="${MCP_HOST:-127.0.0.1}"
 CHECK_INTERVAL="${CHECK_INTERVAL:-20}"
 
-# 车机列表: 每行 "IP:PORT  标签"  (标签可留空, 仅作备注)
-CAR_TARGETS_FILE="$BASE_DIR/cars.txt"
+# 设备列表: 每行 "IP:PORT  标签"  (标签可留空, 仅作备注)
+DEVICES_FILE="$BASE_DIR/devices.txt"
 
 mkdir -p "$BASE_DIR"
 
@@ -76,16 +76,16 @@ start_mcp() {
   return 1
 }
 
-# ── 车机连接维护 ───────────────────────────────────────────
+# ── 设备连接维护 ───────────────────────────────────────────
 read_targets() {
-  [[ -f "$CAR_TARGETS_FILE" ]] || return 0
+  [[ -f "$DEVICES_FILE" ]] || return 0
   # 去掉注释与空行
-  grep -v '^\s*#' "$CAR_TARGETS_FILE" 2>/dev/null | grep -v '^\s*$'
+  grep -v '^\s*#' "$DEVICES_FILE" 2>/dev/null | grep -v '^\s*$'
 }
 
-reconnect_cars() {
+reconnect_devices() {
   if ! command -v adb >/dev/null 2>&1; then
-    log "adb 未安装，跳过车机连接"
+    log "adb 未安装，跳过设备连接"
     return 0
   fi
 
@@ -99,15 +99,15 @@ reconnect_cars() {
       continue
     fi
     # 掉线或未连接 → 重连
-    log "重连车机 $target (当前状态: ${state:-none})"
+    log "重连设备 $target (当前状态: ${state:-none})"
     adb connect "$target" >> "$LOG_FILE" 2>&1
     sleep 1
     state=$(adb devices 2>/dev/null | awk -v t="$target" '$1==t{print $2; exit}')
     if [[ "$state" == "device" ]]; then
-      log "✓ 车机 $target 已连接"
+      log "✓ 设备 $target 已连接"
       connected_any=1
     else
-      log "✗ 车机 $target 连接失败 (状态: ${state:-none})"
+      log "✗ 设备 $target 连接失败 (状态: ${state:-none})"
     fi
   done < <(read_targets)
 }
@@ -115,7 +115,7 @@ reconnect_cars() {
 # ── 状态输出 ───────────────────────────────────────────────
 show_status() {
   echo
-  cyan "══ 车机 MCP 守护状态 ══"
+  cyan "══ adbmcp 守护状态 ══"
   echo
 
   if mcp_alive; then
@@ -143,8 +143,8 @@ show_status() {
   fi
 
   echo
-  cyan "  ── 已配置车机 ──"
-  if [[ -s "$CAR_TARGETS_FILE" ]]; then
+  cyan "  ── 已配置设备 ──"
+  if [[ -s "$DEVICES_FILE" ]]; then
     read_targets | while read -r t rest; do
       [[ -z "$t" ]] && continue
       st=$(adb devices 2>/dev/null | awk -v x="$t" '$1==x{print $2; exit}')
@@ -155,7 +155,7 @@ show_status() {
       fi
     done
   else
-    echo "    (无配置，编辑 $CAR_TARGETS_FILE 每行一个 IP:PORT)"
+    echo "    (无配置，编辑 $DEVICES_FILE 每行一个 IP:PORT)"
   fi
   echo
 }
@@ -168,7 +168,7 @@ run_loop() {
 
   while true; do
     start_mcp
-    reconnect_cars
+    reconnect_devices
     sleep "$CHECK_INTERVAL"
   done
 }

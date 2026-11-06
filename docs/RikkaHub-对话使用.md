@@ -22,27 +22,27 @@
 在 RikkaHub 对话框里**直接用自然语言说**，AI 会自己判断要不要调工具：
 
 ```
-现在有几台车机在线？分别是什么系统？
+现在有几台设备在线？分别是什么系统？
 ```
 
 AI 会调 `run` → `adb devices` → 拿到设备列表。
 
 ### 实测可用的提问示例
 
-#### 车机运维
+#### 设备运维
 ```
 现在 adb 里能连到哪些设备？帮我看看每台的型号和系统版本
-车机 192.168.110.39 现在跑了哪些进程？CPU 占用最高的是哪个
-列出车机 /customer 目录下都有什么文件
-车机的系统版本是什么？内核是什么？
-车机运行了多久了？
+设备 192.168.110.39 现在跑了哪些进程？CPU 占用最高的是哪个
+列出设备 /customer 目录下都有什么文件
+设备的系统版本是什么？内核是什么？
+设备运行了多久了？
 ```
 
 #### 工具选择建议（AI 需要明确点）
 ```
 用 system_info 工具看一下手机的 CPU 和内存
 用 battery 工具查一下电量
-列出 ~/mcp-servers/car 目录下的文件
+列出 ~/mcp-servers/adbmcp 目录下的文件
 搜索 ~/ 下所有 .txt 文件
 ```
 
@@ -68,9 +68,9 @@ AI 会调 `run` → `adb devices` → 拿到设备列表。
 | 提问意图 | 实际调用 | 返回 |
 |---|---|---|
 | 有哪些设备在线 | `adb devices` | `.39` / `.133` / `emulator-5554` |
-| 车机系统版本 | `adb -s .39 shell cat /etc/os-release` | Buildroot 2021.11-rc2 |
-| 车机应用目录 | `adb -s .39 shell ls /customer` | `x4_gui` `run_gui.sh` `voice.mp3` `dui` `htop` ... |
-| 车机运行时长 | `adb -s .39 shell cat /proc/uptime` | 941743 秒（约 10.9 天）|
+| 设备系统版本 | `adb -s .39 shell cat /etc/os-release` | Buildroot 2021.11-rc2 |
+| 设备应用目录 | `adb -s .39 shell ls /customer` | `x4_gui` `run_gui.sh` `voice.mp3` `dui` `htop` ... |
+| 设备运行时长 | `adb -s .39 shell cat /proc/uptime` | 941743 秒（约 10.9 天）|
 | 手机型号 | `getprop ro.product.model` | 22127RK46C |
 | 硬件状态 | `system_info` | CPU 800%、内存 11.2G/7.9G、42°C |
 
@@ -112,7 +112,7 @@ AI 会收到这个提示，然后**重新带确认参数**调用。在 RikkaHub 
 
 | 工具 | 风险 | 建议 |
 |---|---|---|
-| `run` | 执行任意 shell，**能操作车机、能读写手机文件** | ⚠️ 必开 |
+| `run` | 执行任意 shell，**能操作设备、能读写手机文件** | ⚠️ 必开 |
 | `write` / `delete` | 改文件 | ⚠️ 建议开 |
 | `process_kill` | 杀进程 | ⚠️ 建议开 |
 | `sms_send` | 发短信 | ⚠️ 必开 |
@@ -150,7 +150,7 @@ AI 会收到这个提示，然后**重新带确认参数**调用。在 RikkaHub 
 | 文档 | 内容 |
 |---|---|
 | [快速开始](快速开始.md) | 命令与机制完整说明 |
-| [车机接入](车机接入.md) | 车机识别与故障排查 |
+| [设备接入](设备接入.md) | 设备识别与故障排查 |
 | [迁移指南](迁移指南.md) | 换新手机部署 |
 | [RikkaHub 接入](RikkaHub-接入.md) | RikkaHub 两层配置 |
 | [RikkaHub 对话使用](RikkaHub-对话使用.md) | 实测提问示例 |

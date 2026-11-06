@@ -9,20 +9,20 @@
 
 | | yhuangsh/adbmcp | wu737/adbmcp（本项目）|
 |---|---|---|
-| 一句话 | 把 adb 封装成 **37 个 MCP 工具** | 让**手机**变成 MCP 服务端，专门操作**车机** |
+| 一句话 | 把 adb 封装成 **37 个 MCP 工具** | 让**手机**变成 MCP 服务端，专门操作**设备** |
 | 宿主 | PC / 任意装 Node≥20 的机器 | **手机 Termux**（自带 adb 与 MCP 服务端）|
-| 目标设备 | **Android 手机** | **Buildroot Linux 车机** |
+| 目标设备 | **Android 手机** | **Buildroot Linux 设备** |
 | 实现 | TypeScript 1300+ 行自研 | Bash，复用 `termux-mcp` v0.15.0（84 工具）|
 | 传输 | stdio 默认，`--http` 可选 | Streamable HTTP（必需）|
 | 成熟度 | npm 发布 + vitest 测试 + CI + spec 驱动 | 脚本级，无测试无 CI |
-| 特色能力 | Android 深度集成（uiautomator/pm/am/logcat/input/权限管理）| 车机运维（纯 shell）+ 手机即网关 |
+| 特色能力 | Android 深度集成（uiautomator/pm/am/logcat/input/权限管理）| 设备运维（纯 shell）+ 手机即网关 |
 | 安全策略 | 设备白名单 + shell 黑名单 + DNS-rebinding 防护 | Bearer token + 服务端危险命令检测 |
 
 ---
 
-## 关键实证：对方的 Android 工具在车机上全部失效
+## 关键实证：对方的 Android 工具在设备上全部失效
 
-我在自己的车机（`192.168.110.39`，Buildroot Linux）上实测了对方项目依赖的命令：
+我在自己的设备（`192.168.110.39`，Buildroot Linux）上实测了对方项目依赖的命令：
 
 ```
 getprop ro.product.model      => /bin/sh: getprop: not found
@@ -37,26 +37,26 @@ cmd package list              => /bin/sh: cmd: not found
 **对方 37 个工具中依赖 Android 运行时的部分（`get_device_info` / `list_packages` /
 `dumpsys_query` / `get_ui_hierarchy` / `tap` / `swipe` / `type_text` / `key_event` /
 `screenshot` / `logcat_*` / `start_activity` / `force_stop_app` / 权限类工具），
-在我的车机上全部无法工作。**
+在我的设备上全部无法工作。**
 
-原因：车机是 Buildroot Linux，不带 Android framework。
+原因：设备是 Buildroot Linux，不带 Android framework。
 
 ---
 
 ## 能力重叠的部分
 
-对方的 `shell` 工具（`adb shell` 封装）+ `connect` 工具，**确实能操作我的车机** ——
+对方的 `shell` 工具（`adb shell` 封装）+ `connect` 工具，**确实能操作我的设备** ——
 `allowedPrefixes` 默认不限制，`allowedDevices` 默认允许所有设备。
 
-所以单看「用 AI 操作车机」这个需求，两边都能做。区别在**部署形态**：
+所以单看「用 AI 操作设备」这个需求，两边都能做。区别在**部署形态**：
 
 | | yhuangsh/adbmcp | 本项目 |
 |---|---|---|
 | 需要 PC 在场 | ✅ 必须（除非在 Termux 里装 Node.js 跑它）| ❌ 不需要 |
-| 车机可达性 | PC 必须在车机网段 | 手机连车机热点即可 |
+| 设备可达性 | PC 必须在设备网段 | 手机连设备热点即可 |
 | 现场部署 | 拆笔记本、装 Node、连网、启动进程 | 手机上敲 `adbmcp` |
 
-这也是最初我选手机宿主的核心原因：**车机通常只开热点给手机，不给 PC 接入。**
+这也是最初我选手机宿主的核心原因：**设备通常只开热点给手机，不给 PC 接入。**
 
 ---
 
@@ -73,8 +73,8 @@ cmd package list              => /bin/sh: cmd: not found
 - **协议完整度** —— 同时提供 tools / resources（`adb://devices`）/ prompts
 
 ### 本项目更强的地方
-- **车机场景** —— 目标就是 Buildroot 车机，实测覆盖
-- **手机即宿主** —— 不需要 PC，车机热点直连
+- **设备场景** —— 目标就是 Buildroot 设备，实测覆盖
+- **手机即宿主** —— 不需要 PC，设备热点直连
 - **零 Node 依赖** —— Termux + Python + Bash 即可，Termux:Boot 开机自启
 - **通用工具面** —— 84 个工具含 shell / 文件读写 / 截图 / 通知 / 短信 / 电池 等，
   不止 adb

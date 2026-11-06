@@ -1,7 +1,8 @@
 # 脚本必须保持 LF —— Termux/Linux 下 CRLF 会导致 "bad interpreter" 错误
 *.sh text eol=lf
+*.py text eol=lf
 scripts/adbmcp text eol=lf
-scripts/scan_car.py text eol=lf
+scripts/scan_device.py text eol=lf
 
 # 文档统一 LF
 *.md text eol=lf

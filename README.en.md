@@ -1,9 +1,9 @@
 # adbmcp
 
-**Turn your Android phone into a remote control for your car head units** — expose it as an MCP server so Claude, Cursor, RikkaHub, WorkBuddy, or any MCP-capable AI client can operate your vehicle via natural language.
+**Turn your Android phone into a remote control for your devices** — expose it as an MCP server so Claude, Cursor, RikkaHub, WorkBuddy, or any MCP-capable AI client can operate your vehicle via natural language.
 
 ```
-You say in RikkaHub: "Which car units are online right now? What OS do they run?"
+You say in RikkaHub: "Which devices are online right now? What OS do they run?"
                     ↓
               AI invokes an MCP tool
                     ↓
@@ -16,7 +16,7 @@ You say in RikkaHub: "Which car units are online right now? What OS do they run?
 
 ## Why the phone-as-host design
 
-The first attempt ran `mobile-mcp` on the PC (accessibility-tree based Android automation). Testing showed the car head units run **Buildroot Linux** — no `getprop`, no `wm` — so the accessibility approach was **completely non-functional**. Only a pure `adb shell` route works.
+The first attempt ran `mobile-mcp` on the PC (accessibility-tree based Android automation). Testing showed the target devices run **Buildroot Linux** — no `getprop`, no `wm` — so the accessibility approach was **completely non-functional**. Only a pure `adb shell` route works.
 
 | Dimension | Phone Termux host | PC-side mobile-mcp |
 |---|---|---|
@@ -29,10 +29,11 @@ The first attempt ran `mobile-mcp` on the PC (accessibility-tree based Android a
 
 ## Features
 
-- **One-command launch** — type `adbmcp` in Termux; MCP server and car connections come up together
+- **One-command launch** — type `adbmcp` in Termux; starts the MCP server and prints the connection info
+- **Non-intrusive** — startup never connects to any device; the watchdog waits until a device appears
 - **LAN direct access** — any AI client connects straight to `http://<phone-IP>:8081/mcp`, no PC relay
 - **Fixed token** — AI client configs survive device migrations unchanged
-- **Dual-end watchdog** — phone side guards the MCP process and car connections, PC side guards the adb tunnel; both self-heal
+- **Dual-end watchdog** — phone side guards the MCP process and device connections, PC side guards the adb tunnel; both self-heal
 - **84 tools** — powered by `termux-mcp` v0.15.0: shell execution, file I/O, screenshot, notifications, and more
 - **Dangerous-command gating** — the server flags high-risk commands and requires explicit confirmation
 
@@ -53,14 +54,14 @@ cd ~/adbmcp
 bash install/install-adbmcp.sh
 ```
 
-The script installs dependencies (`android-tools` + `termux-mcp`), deploys the scripts, creates the car manifest, starts and self-checks the server, and scans the subnet for adb devices.
+The script installs dependencies (`android-tools` + `termux-mcp`), deploys the scripts, creates the device manifest, starts and self-checks the server, and scans the subnet for adb devices.
 
-### 3. Fill in the car manifest
+### 3. Fill in the device manifest
 
-Edit `~/mcp-servers/car/cars.txt`:
+Edit `~/mcp-servers/adbmcp/devices.txt`:
 
 ```
-192.168.43.1:5555    car hotspot gateway
+192.168.43.1:5555    device hotspot gateway
 192.168.110.39:5555  head unit - Buildroot/wise
 ```
 
@@ -106,6 +107,7 @@ Use system_info to check the phone's CPU and memory.
 | `adbmcp` | Start and print connection info (default) |
 | `adbmcp status` | MCP / watchdog / adb device status |
 | `adbmcp config` | Print a paste-ready client config |
+| `adbmcp connect` | Manually connect the devices in the manifest |
 | `adbmcp token` | Show the current fixed token |
 | `adbmcp scan [subnet]` | Find every device with port 5555 open |
 | `adbmcp lan` / `adbmcp local` | LAN mode (with token) / localhost-only (no auth) |
@@ -137,11 +139,11 @@ Use system_info to check the phone's CPU and memory.
 install/install-adbmcp.sh   one-shot installer
 scripts/
   adbmcp                    main script (on PATH, just type `adbmcp`)
+  device_watchdog.sh        watchdog: MCP process + device connections
+  device_setup.sh           manual device connection helper
+  scan_device.py            subnet scanner
+  boot_mcp.sh               boot autostart entry
   patch_cancelled.py        upstream patch (adds notifications/* handling)
-  car_watchdog.sh           watchdog: MCP process + car connections
-  boot_car_mcp.sh           boot autostart entry
-  car_setup.sh              manual car connection helper
-  scan_car.py               subnet scanner
 docs/                       detailed documentation
 examples/                   client config samples
 ```
@@ -150,8 +152,8 @@ After deployment on the phone:
 
 ```
 ~/bin/adbmcp                      ← main script
-~/mcp-servers/car/               ← manifest, logs, generated config
-~/.termux/boot/boot_car_mcp.sh    ← boot autostart
+~/mcp-servers/adbmcp/               ← manifest, logs, generated config
+~/.termux/boot/boot_mcp.sh    ← boot autostart
 ```
 
 ---
@@ -161,7 +163,7 @@ After deployment on the phone:
 | Doc | Contents |
 |---|---|
 | [快速开始 (Chinese)](docs/快速开始.md) | Full command and mechanism reference |
-| [车机接入 (Chinese)](docs/车机接入.md) | Car identification, protocol limits, troubleshooting |
+| [设备接入 (Chinese)](docs/设备接入.md) | Car identification, protocol limits, troubleshooting |
 | [迁移指南 (Chinese)](docs/迁移指南.md) | Deploying on a new phone |
 | [RikkaHub 接入](docs/RikkaHub-接入.md) | RikkaHub's two-layer config (global MCP + assistant binding) |
 | [RikkaHub 对话使用](docs/RikkaHub-对话使用.md) | Verified prompt examples, path permission boundaries |
@@ -181,12 +183,12 @@ coincidence, and they coexist fine:
 | | yhuangsh/adbmcp | this project |
 |---|---|---|
 | Host | PC / any machine with Node ≥20 | **phone running Termux** |
-| Target device | **Android phones** | **Buildroot Linux car head units** |
+| Target device | **Android phones** | **Buildroot Linux devices** |
 | Implementation | 1300+ lines of hand-written TypeScript, 37 tools | Bash on top of `termux-mcp`, 84 tools |
 | Highlights | deep Android integration (uiautomator/logcat/pm/input), npm distribution, full test suite and CI | car-unit operations, phone-as-gateway, zero Node dependency, fixed token |
 
 Measured evidence: the Android-specific tools on the other project all fail with `not found`
-on a car head unit (Buildroot has no Android framework).
+on a Buildroot device (no Android framework).
 See the [comparison doc](docs/对比-yhuangsh-adbmcp.md).
 
 ---
@@ -208,7 +210,7 @@ On the client side (RikkaHub / Claude / …), enable "requires approval" for hig
 
 | Tool | Risk |
 |---|---|
-| `run` | ⚠️ executes arbitrary shell — can operate car units and read/write phone files |
+| `run` | ⚠️ executes arbitrary shell — can operate devices and read/write phone files |
 | `write` / `delete` | modify / remove files (soft delete into `~/termuxGPT/trash/`) |
 | `process_kill` | kill processes |
 | `sms_send` | send SMS |
@@ -223,7 +225,7 @@ Read-only tools (`read` / `ls` / `search` / `system_info` / `battery`) need no a
 - **Killing Termux kills the MCP process.** The watchdog handles "Termux alive but MCP dead"; a fully killed Termux needs the app reopened (Termux:Boot automates this).
 - **Wireless debugging drops when the screen sleeps.** The phone was observed flipping to `offline` repeatedly. Workarounds: `termux-wake-lock`, disable battery optimization, or use USB.
 - **No `ip` command permission in Termux**, and `/proc/net/fib_trie` is restricted on Android 11+ → IP detection falls back to a Python socket.
-- **The Termux adb build has no `adb mdns`** → car IPs must be entered manually or found via `adbmcp scan`.
+- **The Termux adb build has no `adb mdns`** → device IPs must be entered manually or found via `adbmcp scan`.
 - **`run` may return empty output for compound commands containing `;`** → issue them separately.
 
 ---

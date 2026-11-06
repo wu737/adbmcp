@@ -24,7 +24,7 @@
 # Termux 内
 $ grep -c 'adbmcp-patch' .../termux_mcp/mcp_core.py
 0
-$ tail -12 ~/mcp-servers/car/mcp.log
+$ tail -12 ~/mcp-servers/adbmcp/mcp.log
 11:54:53 [INFO] termux_mcp.mcp_server: Authentication: enabled (length=33)
 11:54:53 [INFO] termux_mcp.mcp_server: Termux native MCP (Streamable HTTP) listening on http://0.0.0.0:8081/mcp
 ...
@@ -138,7 +138,7 @@ tools/list                 → 200 application/json
 tools/call                 → 200 text/event-stream
 notifications/cancelled    → 202   ← 修复前是连接中断
 
-=== 车机链路 ===
+=== 设备链路 ===
 adb -s 192.168.110.39:5555 shell hostname  →  wise
 ```
 
@@ -159,7 +159,7 @@ adb -s 192.168.110.39:5555 shell hostname  →  wise
 用 Python 写脚本时默认输出 CRLF，base64 传到手机后：
 
 ```
-/data/data/com.termux/files/home/mcp-servers/car/install-adbmcp.sh: line 34:
+/data/data/com.termux/files/home/mcp-servers/adbmcp/install-adbmcp.sh: line 34:
 syntax error near unexpected token `$'{\r''
 ```
 
