@@ -47,7 +47,8 @@ def normalize_line_endings() -> int:
     Termux 下 CRLF 会导致 "bad interpreter: /bin/bash^M", 必须在打包前兜住。
     """
     import glob
-    patterns = ["scripts/*", "install/*.sh", "src/adbmcp/*.py", "tools/*.py"]
+    patterns = ["scripts/*", "install/*.sh", "src/adbmcp/*.py", "tools/*.py",
+                "pyproject.toml", ".github/workflows/*.yml"]
     fixed = 0
     for pat in patterns:
         for path in glob.glob(os.path.join(REPO, pat)):
